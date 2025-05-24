@@ -1,65 +1,36 @@
-import logging
-from telegram import Update, Message
-from telegram.constants import ChatAction
-from telegram.ext import (
-    ApplicationBuilder,
-    ContextTypes,
-    MessageHandler,
-    filters,
-)
-# Configure logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+import requests
+import random
+import time
 
-# List of emojis to react with
-EMOJIS = ["🔥", "😂", "❤️", "👍", "😎"]
+BOT_TOKEN = "7590753386:AAFzciQ6_CqU5XMdDwqVOS4DCVGg8c4B95k"
+API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
-async def auto_react(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message:
-        return
+a = ["❤️", "🔥", "👍", "😂", "🎉"]
+last_update_id = None
 
-    msg: Message = update.message
-    user = msg.from_user
+while True:
+    res = requests.get(API_URL + "getUpdates", params={"offset": last_update_id, "timeout": 10})
+    data = res.json()
 
-    # Send a typing action
-    await context.bot.send_chat_action(chat_id=msg.chat_id, action=ChatAction.TYPING)
+    if data.get("ok"):
+        for update in data["result"]:
+            last_update_id = update["update_id"] + 1
 
-    # 1. React with emoji (reply with random emoji or fixed)
-    emoji = EMOJIS[hash(user.id) % len(EMOJIS)]  # Random but consistent per user
-    await msg.reply_text(f"{emoji}")
+            # Check agar message ya channel_post aaye
+            for key in ["message", "channel_post"]:
+                if key in update:
+                    msg = update[key]
+                    chat_id = msg["chat"]["id"]
+                    message_id = msg["message_id"]
+                    emoji = random.choice(a)
 
-    # 2. Clone/echo the original message (text, photo, etc.)
-    if msg.text:
-        await msg.reply_text(f"Echo: {msg.text}")
-    elif msg.photo:
-        file_id = msg.photo[-1].file_id
-        await msg.reply_photo(photo=file_id, caption="Echo: Photo")
-    elif msg.video:
-        await msg.reply_video(video=msg.video.file_id, caption="Echo: Video")
-    elif msg.sticker:
-        await msg.reply_sticker(sticker=msg.sticker.file_id)
-    else:
-        await msg.reply_text("Echo: I received something cool!")
+                    payload = {
+                        "chat_id": chat_id,
+                        "message_id": message_id,
+                        "reaction": [{"type": "emoji", "emoji": emoji, "is_big": True}]
+                    }
 
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
-    logger.error("Exception while handling update:", exc_info=context.error)
+                    r = requests.post(API_URL + "setMessageReaction", json=payload)
+                    print(r.json())
 
-def main():
-    import os
-    TOKEN = os.getenv("BOT_TOKEN")
-    if not TOKEN:
-        raise Exception("BOT_TOKEN environment variable not set.")
-
-    app = ApplicationBuilder().token(TOKEN).build()
-
-    # Register handler for all message types
-    app.add_handler(MessageHandler(filters.ALL, auto_react))
-    app.add_error_handler(error_handler)
-
-    print("Bot is running...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+    time.sleep(1)
