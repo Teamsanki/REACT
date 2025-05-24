@@ -2,7 +2,7 @@ import requests
 import random
 import time
 
-BOT_TOKEN = "7590753386:AAFzciQ6_CqU5XMdDwqVOS4DCVGg8c4B95k"
+BOT_TOKEN = "7298664300:AAGRodfJgGnwdjq9QcHSbT-Hx0r4jQF7980"
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
 a = ["❤️", "🔥", "👍", "😂", "🎉"]
