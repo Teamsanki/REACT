@@ -1,12 +1,12 @@
 import logging
-from telegram import Update, Message, ChatAction
+from telegram import Update, Message
+from telegram.constants import ChatAction
 from telegram.ext import (
     ApplicationBuilder,
     ContextTypes,
     MessageHandler,
     filters,
 )
-
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
